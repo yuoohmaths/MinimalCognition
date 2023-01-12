@@ -94,8 +94,9 @@ for u,v in edges:
 # conductivity
 D = A.copy()*1.0
 
-plt.imshow(L)
+plt.imshow(L, cmap='Blues')
 plt.colorbar()
+plt.title("Distance matrix")
 plt.show()
 
 #%%
@@ -110,14 +111,14 @@ bt = .5
 # reinforcement strength (of conductancy)
 q = .1
 # decaying rate (of conductancy)
-lam = .1
+lam = .01
 
 #%%
 ### Discrete dynamics ###
 # dt
 step = 0.01
 # number of time steps
-T = 20000
+T = 100000
 # tolerance for convergence
 tol = 1e-4
 
@@ -196,14 +197,17 @@ plt.figure(figsize=(15, 10))
 
 plt.subplot(311)
 colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple']
+
+t_range = np.arange(T+1)*step
+
 for i in range(N):
   if i in sources:
-      plt.plot(res[:,i], color='b', label='source {}'.format(i))
+      plt.plot(t_range, res[:,i], color='b', label='source {}'.format(i))
   elif i in sinks:
-      plt.plot(res[:,i], color='r', label='sink {}'.format(i))
+      plt.plot(t_range, res[:,i], color='r', label='sink {}'.format(i))
   else:
-	  plt.plot(res[:,i], color=colors[i], linestyle='dashed', label='node {}'.format(i))
-plt.xlabel('Time step')
+	  plt.plot(t_range, res[:,i], color=colors[i], linestyle='dashed', label='node {}'.format(i))
+plt.xlabel('Time (step {})'.format(step))
 plt.ylabel('# Particles')
 plt.legend()
 
@@ -212,7 +216,7 @@ node = sources[0]
 plt.subplot(312)
 for i in range(N):
   if L[node,i]>0:
-	  plt.plot(Ds[:, node, i], color=colors[i], label='({},{})'.format(node,i))
+	  plt.plot(t_range, Ds[:, node, i], color=colors[i], label='({},{})'.format(node,i))
 plt.ylabel('Conductancy')
 plt.xlabel('Time')
 plt.legend()
@@ -221,7 +225,7 @@ node = sinks[0]
 plt.subplot(313)
 for i in range(N):
   if L[node,i]>0:
-	  plt.plot(Ds[:,node, i], color=colors[i], label='({},{})'.format(node,i))
+	  plt.plot(t_range, Ds[:,node, i], color=colors[i], label='({},{})'.format(node,i))
 plt.ylabel('Conductancy')
 plt.xlabel('Time')
 plt.legend()
@@ -232,15 +236,20 @@ plt.show()
 # make a video
 import matplotlib.animation as animation
 
+num = 1000 # number of plots in a video
+t_lag = int(T/num)
+print("# plots in a video:", num, "per", t_lag)
+
 frames = [] # for storing the generated images
 vmax = round(np.max(Ds[-1,:,:])+0.1, 1)
 print("max weight value:", vmax)
 
 fig = plt.figure()
-for t in range(T):
+for i in range(num):
+    t = i*t_lag
     frames.append([plt.imshow(Ds[t, :, :], cmap='Blues', vmax=vmax, animated=True)])
 
-ani = animation.ArtistAnimation(fig, frames, interval=5, blit=True,
+ani = animation.ArtistAnimation(fig, frames, interval=10, blit=True,
                                 repeat_delay=1000)
 ani.save(gtype+'_discret-1.mp4')
 plt.show()
@@ -260,7 +269,7 @@ def sink_output(t, rate):
 N = G.number_of_nodes()
 x0 = 1.0*np.ones(N);
 D0 = 1.0*A.copy()
-ND=MaxTime=100.0;
+ND=MaxTime=1000.0;
 TS=0.01
 
 INPUT=np.hstack((x0,D0.flatten()))
@@ -269,7 +278,7 @@ INPUT=np.hstack((x0,D0.flatten()))
 # write the differential equations
 def diff_eqs(INP,t):  
     '''The main set of equations'''
-    Y=np.zeros((N + N*N))
+    Y = np.zeros((N + N*N))
     V = INP   
     for i in range(N):
         if i in sources:
@@ -281,9 +290,11 @@ def diff_eqs(INP,t):
         
         for j in range(N):
             if L[j,i] > 0:
-                Y[i] += (V[j] - V[i])/L[j,i]*V[(j+1)*N+i] #D[j,i] # from each neighbours
-            Y[(j+1)*N+i] = q*abs(V[i] - V[j])*V[(j+1)*N+i] - lam*V[(j+1)*N+i]
-            # Y[(j+1)*N+i] = q*(V[j] - V[i])*V[(j+1)*N+i] - lam*V[(j+1)*N+i]
+                Y[i] += (V[j] - V[i])/L[j,i]*V[(j+1)*N+i] # from each neighbours
+                Y[(j+1)*N+i] = q*abs(V[i] - V[j])/L[j,i]*V[(j+1)*N+i] - lam*V[(j+1)*N+i] # conductancy D[j,i]
+                # Y[(j+1)*N+i] = q*(V[j] - V[i])/L[j,i]*V[(j+1)*N+i] - lam*V[(j+1)*N+i]
+            else:
+                Y[(j+1)*N+i] = 0
     return Y   # For odeint
 
 t_start = 0.0; t_end = ND; t_inc = TS
@@ -333,26 +344,30 @@ pl.show()
 # make a video
 import matplotlib.animation as animation
 
+num = 1000 # the number of plots in the video
+t_lag = int(MaxTime/TS/num)
+print("# plots in a video:", num, "per", t_lag)
+
 # the max value
-t_end = T
 D_res = np.zeros((N,N))
 for i,j in G.edges():
-    D_res[i,j] = RES[t_end, (i+1)*N+j]
-    D_res[j,i] = RES[t_end, (j+1)*N+i]
+    D_res[i,j] = RES[-1, (i+1)*N+j]
+    D_res[j,i] = RES[-1, (j+1)*N+i]
 vmax = round(np.max(D_res) + 0.1, 1)
 print("max conductancy:", vmax)
 
 frames = [] # for storing the generated images
 fig = plt.figure()
-for t in range(t_end):
+for i in range(num):
     # construct the conductancy matrix at time t
+    t = i*t_lag
     D_res = np.zeros((N,N))
     for i,j in G.edges():
         D_res[i,j] = RES[t, (i+1)*N+j]
         D_res[j,i] = RES[t, (j+1)*N+i]
     frames.append([plt.imshow(D_res, cmap='Blues', vmax=vmax, animated=True)])
 
-ani = animation.ArtistAnimation(fig, frames, interval=5, blit=True,
+ani = animation.ArtistAnimation(fig, frames, interval=10, blit=True,
                                 repeat_delay=1000)
 ani.save(gtype+'_continuous-1.mp4',)
 plt.show()
