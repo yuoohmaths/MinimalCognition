@@ -5,7 +5,7 @@ Modelling slime mould
 author: Yu
 
 This is to model the dynamics on cycle graphs, where we have one source and one
-sink, and the input rate and the output rate is fixed (or not oscilated).
+sink, and the input rate and the output rate is fixed (or not oscillated).
 """
 #%%
 import numpy as np
