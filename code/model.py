@@ -75,8 +75,8 @@ A = nx.to_numpy_array(G)
 W = A.copy()
 
 # Distances
-dist = 10. # Distance for other edges
-dist_s = 10. # Distance for the edges in the path of the least #edges
+dist = 1. # Distance for other edges
+dist_s = 3. # Distance for the edges in the path of the least #edges
 if dist_s != dist:
     gtype += '-l{}'.format(int(dist_s))
 else:
@@ -115,6 +115,62 @@ bt = .5
 q = .1
 # decaying rate (of conductancy)
 lam = .01
+
+
+#%%
+###############################################################################
+#                          Steady states
+###############################################################################
+
+D_steady = np.zeros((N,N))
+
+#Check if graph is C_n
+
+# Check which path is the shortest
+all_paths = []
+paths = nx.all_simple_paths(G, source=sources[0], target=sinks[0])
+all_paths.extend(paths)
+
+print("Paths between source and sink:", all_paths) #print all paths
+
+path_length_forward = 0
+path_length_backwards = 0
+
+# compute the length of the path
+
+for i in range(0, len(all_paths[0])):
+        path_length_forward += L[all_paths[0][i]][all_paths[0][(i+1)%len(all_paths[0])]]
+
+for i in range(0, len(all_paths[1])):
+        path_length_backwards += L[all_paths[1][i]][all_paths[1][(i+1)%len(all_paths[1])]]
+ 
+# update the steady states depending which one is shortest        
+ 
+if path_length_forward > path_length_backwards:
+#    for i in range(0, len(all_paths[1])):
+#        D_steady[all_paths[1][i]][all_paths[1][(i+1)%len(all_paths[1])]] = 0
+#       D_steady[all_paths[1][(i+1)%len(all_paths[1])]][all_paths[1][i]] = 0
+    for j in range(0, len(all_paths[0])):
+        D_steady[all_paths[0][j]][all_paths[0][(j+1)%len(all_paths[0])]] = at*q/lam
+        D_steady[all_paths[0][(j+1)%len(all_paths[0])]][all_paths[0][j]] = at*q/lam  
+
+elif path_length_forward < path_length_backwards:
+#    for j in range(0, len(all_paths[0])):
+#       D_steady[all_paths[0][j]][all_paths[0][(j+1)%len(all_paths[0])]] = 0
+#       D_steady[all_paths[0][(j+1)%len(all_paths[0])]][all_paths[0][j]] = 0
+    for i in range(0, len(all_paths[1])):
+        D_steady[all_paths[1][i]][all_paths[1][(i+1)%len(all_paths[1])]] = at*q/lam
+        D_steady[all_paths[1][(i+1)%len(all_paths[1])]][all_paths[1][i]] = at*q/lam
+
+# if they have the same length
+else:    
+    for j in range(0, len(all_paths[0])):
+        D_steady[all_paths[0][j]][all_paths[0][(j+1)%len(all_paths[0])]] =  at*q/(lam*2)
+        D_steady[all_paths[0][(j+1)%len(all_paths[0])]][all_paths[0][j]] =  at*q/(lam*2)
+    for i in range(0, len(all_paths[1])):
+        D_steady[all_paths[1][i]][all_paths[1][(i+1)%len(all_paths[1])]] = at*q/(lam*2)
+        D_steady[all_paths[1][(i+1)%len(all_paths[1])]][all_paths[1][i]] = at*q/(lam*2)
+
 
 #%%
 ### Discrete dynamics ###
@@ -209,7 +265,10 @@ node = sources[0]
 plt.subplot(312)
 for i in range(N):
   if L[node,i]>0:
-	  plt.plot(t_range, Ds[:, node, i], color=colors[i], label='({},{})'.format(node,i))
+      plt.plot(t_range, Ds[:, node, i], color=colors[i], label='({},{})'.format(node,i))
+      #plot steady states
+      plt.hlines(y=D_steady[node, i], xmin=0, xmax=t_range[-1], color=colors[i], linestyles='--', label='({},{})'.format(node,i))
+
 plt.ylabel('Conductancy')
 plt.xlabel('Time')
 plt.legend()
@@ -219,7 +278,10 @@ node = sinks[0]
 plt.subplot(313)
 for i in range(N):
   if L[node,i]>0:
-	  plt.plot(t_range, Ds[:,node, i], color=colors[i], label='({},{})'.format(node,i))
+      plt.plot(t_range, Ds[:,node, i], color=colors[i], label='({},{})'.format(node,i))
+      #plot steady states
+      plt.hlines(y=D_steady[node, i], xmin=0, xmax=t_range[-1], color=colors[i], linestyles='--', label='({},{})'.format(node,i))
+
 plt.ylabel('Conductancy')
 plt.xlabel('Time')
 plt.legend()
