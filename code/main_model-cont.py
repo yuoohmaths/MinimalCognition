@@ -17,15 +17,17 @@ import matplotlib.pyplot as plt
 import scipy.integrate as spi
 import pylab as pl
 
+import time
+
 #%%
 ###############################################################################
 #                       Networks construction
 ###############################################################################
 # Cycle graphs
-G = nx.cycle_graph(5)
+# G = nx.cycle_graph(5)
 # G = nx.cycle_graph(6)
 # G.add_edge(3,5)
-# G = nx.cycle_graph(7)
+G = nx.cycle_graph(7)
 
 N = G.number_of_nodes()
 print("{} nodes with {} edges".format(N, G.number_of_edges()))
@@ -37,10 +39,10 @@ dict_i2n = {n:n+1 for n in G.nodes()}
 # visualisation
 pos = nx.spring_layout(G)
 # pos = {0: np.array([-0.6 , -0.8]),
-#  1: np.array([ 0.6, -0.8  ]),
-#  2: np.array([0.97, 0.3]),
-#  3: np.array([0., 1.        ]),
-#  4: np.array([-0.97,  0.3])}
+#   1: np.array([ 0.6, -0.8  ]),
+#   2: np.array([0.97, 0.3]),
+#   3: np.array([0., 1.        ]),
+#   4: np.array([-0.97,  0.3])}
 nx.draw_networkx(G, pos=pos, with_labels=False)
 nx.draw_networkx_labels(G, pos=pos, labels=dict_i2n)
 print("Nodes:", G.nodes())
@@ -148,7 +150,7 @@ all_paths = []
 paths = nx.all_simple_paths(G, source=souri[0], target=sinki[0])
 all_paths.extend(paths)
 
-print("Paths between source and sink:", all_paths) #print all paths
+# print("Paths between source and sink:", all_paths) #print all paths
 
 path_length_forward = 0
 path_length_backwards = 0
@@ -209,7 +211,9 @@ INPUT=np.hstack((x0,D0.flatten()))
 
 #%%
 # Differential equations - for scipy.integrate.odeint
-def diff_eqs(INP,t):  
+t_s = time.time()
+# def diff_eqs(INP, t):  
+def diff_eqs(t, INP):  
     '''The main set of equations'''
     Y = np.zeros((N + N*N))
     V = INP   
@@ -234,7 +238,10 @@ def diff_eqs(INP,t):
 
 t_start = 0.0; t_end = ND; t_inc = TS
 t_range = np.arange(t_start, t_end+t_inc, t_inc)
-RES = spi.odeint(diff_eqs,INPUT,t_range)
+# RES = spi.odeint(diff_eqs,INPUT,t_range)
+RES = spi.solve_ivp(diff_eqs, [t_start, t_end], INPUT, method='RK45', t_eval=t_range)
+
+print("time for solving ODEs:", time.time() - t_s)
 
 # print(RES)
 #%%
@@ -291,7 +298,8 @@ pl.show()
 # Visualisation - shortest path vs not - separated
 colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple',
           'tab:brown', 'tab:pink', 'tab:gray', 'tab:olive', 'tab:cyan']
-figsize=(12., 4.)
+
+figsize=(9., 3.)
 fz = 16
 plt.rcParams.update({'font.size': fz})
 
@@ -299,44 +307,69 @@ plt.rcParams.update({'font.size': fz})
 plt.figure(figsize=figsize)
 for i in range(N):
   if i in souri:
-      plt.plot(t_range, RES[:,i], color='b', label='node {}'.format(dict_i2n[i]), alpha=0.8)
+      plt.plot(t_range, [source_input(t, at) for t in t_range], color='b', label='node {}'.format(dict_i2n[i]), alpha=0.8)
   elif i in sinki:
-      plt.plot(t_range, RES[:,i], color='r', label='node {}'.format(dict_i2n[i]), alpha=0.8)
+      plt.plot(t_range, -sink_output(t_range, bt)*RES.y[i,:], color='r', label='node {}'.format(dict_i2n[i]), alpha=0.8)
+plt.xlabel('Time')
+plt.ylabel('Input / Output')
+plt.legend(framealpha=0.6, loc='upper right')
+plt.savefig(gtype+"_const-phase_io.png", dpi=300, bbox_inches='tight')
+plt.show()
+
+# figsize=(12., 4.)
+# fz = 16
+# plt.rcParams.update({'font.size': fz})
+
+# Visualisation - the state value
+plt.figure(figsize=figsize)
+for i in range(N):
+  if i in souri:
+      # plt.plot(t_range, RES[:,i], color='b', label='node {}'.format(dict_i2n[i]), alpha=0.8)
+      plt.plot(t_range, RES.y[i,:], color='b', label='node {}'.format(dict_i2n[i]), alpha=0.8)
+  elif i in sinki:
+      plt.plot(t_range, RES.y[i,:], color='r', label='node {}'.format(dict_i2n[i]), alpha=0.8)
   else:
- 	  plt.plot(t_range, RES[:,i], color=colors[i], linestyle='dashed', label='node {}'.format(dict_i2n[i]), alpha=0.8)
+ 	  plt.plot(t_range, RES.y[i,:], color=colors[i], linestyle='dashed', label='node {}'.format(dict_i2n[i]), alpha=0.8)
       # plt.plot(t_range, RES[:,i], linestyle='dashed', label='node {}'.format(dict_i2n[i]), alpha=0.8)
 plt.xlabel('Time')
 plt.ylabel('# Particles')
-plt.legend(framealpha=0.6, loc='upper right')
+plt.legend(framealpha=0.6, loc='upper right', fontsize=14)
 plt.savefig(gtype+"_const-phase_Nt.png", dpi=300, bbox_inches='tight')
 plt.show()
 
 #%%
 # Visualisation - the conductivity of the edges in the shortest path
-figsize=(9, 3)
+# figsize=(9, 3)
 plt.figure(figsize=figsize)
-colors = ['tab:blue', 'tab:red']
+colors = ['tab:blue', 'tab:red', 'y']
+idx = 0
 for i in range(N):
     for j in range(i+1, N):
         if (i,j) in path_sesti:
-            plt.plot(t_range, RES[:,j+N*(1+i)], color=colors[i], label='({},{})'.format(dict_i2n[i],dict_i2n[j]), alpha=0.6)
+            # plt.plot(t_range, RES[:,j+N*(1+i)], color=colors[i], label='({},{})'.format(dict_i2n[i],dict_i2n[j]), alpha=0.6)
+            plt.plot(t_range, RES.y[j+N*(1+i),:], color=colors[idx], label='({},{})'.format(dict_i2n[i],dict_i2n[j]), alpha=0.6)
             #plot steady states
             # pl.hlines(y=D_steady[i, j], xmin=0, xmax=t_range[-1], color=colors[i], linestyles='--', label='({},{})'.format(dict_i2n[i],dict_i2n[j]))
-            plt.hlines(y=D_steady[i, j], xmin=0, xmax=t_range[-1], color=colors[i], linestyles='--')
-pl.ylabel('Conductivity')
-pl.xlabel('Time')
-pl.legend(framealpha=0.6, loc='lower right')
+            plt.hlines(y=D_steady[i, j], xmin=0, xmax=t_range[-1], color=colors[idx], linestyles='--')
+            idx += 1
+plt.ylabel('Conductivity')
+plt.xlabel('Time')
+plt.legend(framealpha=0.6, loc='lower right')
 plt.savefig(gtype+"_const-phase_D-sp.png", dpi=300, bbox_inches='tight')
 plt.show()
 
 #%%
 # Visualisation - the conductivity of the edges to the sink
+tol = 1e-4
+
 plt.figure(figsize=figsize)
 colors = ['tab:purple', 'tab:red', 'tab:green', 'tab:orange', 'tab:pink', 'tab:olive', 'tab:cyan']
 for i in range(N):
     for j in range(i+1, N):
         if (L[i,j]>0) and ((i,j) not in path_sesti):
-            plt.plot(t_range, RES[:,j+N*(1+i)], color=colors[i], label='({},{})'.format(dict_i2n[i],dict_i2n[j]), alpha=0.6)
+            # if RES.y[j+N*(1+i),-1] > tol:
+            # plt.plot(t_range, RES[:,j+N*(1+i)], color=colors[i], label='({},{})'.format(dict_i2n[i],dict_i2n[j]), alpha=0.6)
+            plt.plot(t_range, RES.y[j+N*(1+i),:], color=colors[i], label='({},{})'.format(dict_i2n[i],dict_i2n[j]), alpha=0.6)
             #plot steady states
             # pl.hlines(y=D_steady[i, j], xmin=0, xmax=t_range[-1], color=colors[i], linestyles='--', label='({},{})'.format(dict_i2n[i],dict_i2n[j]))
             plt.hlines(y=D_steady[i, j], xmin=0, xmax=t_range[-1], color=colors[i], linestyles='--')
