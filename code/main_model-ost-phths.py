@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 # solving odes
 import scipy.integrate as spi
 
+path_res = './results/'
 #%%
 ###############################################################################
 #                       Networks construction
@@ -73,7 +74,7 @@ nx.draw_networkx_edges(G, pos, edge_color='grey', width=lw, alpha=0.8)
 
 plt.grid(False)
 plt.box(False)
-# plt.savefig("{}_Graph.pdf".format(gtype), dpi=300, bbox_inches='tight')
+# plt.savefig(path_res+"{}_Graph.pdf".format(gtype), dpi=300, bbox_inches='tight')
 plt.show()
 
 #%%
@@ -271,5 +272,5 @@ for ther in thers:
         
         plt.grid(False)
         plt.box(False)
-        plt.savefig("{}_res-G-{}.png".format(gtype,fp_lab), dpi=300, bbox_inches='tight')
+        plt.savefig(path_res+"{}_res-G-{}.png".format(gtype,fp_lab), dpi=300, bbox_inches='tight')
         plt.show() 
