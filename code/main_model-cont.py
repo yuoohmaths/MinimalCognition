@@ -18,6 +18,7 @@ import scipy.integrate as spi
 
 import time
 
+path_res = './results/'
 #%%
 ###############################################################################
 #                       Networks construction
@@ -80,7 +81,7 @@ nx.draw_networkx_edges(G, pos, edge_color='grey', width=lw, alpha=0.8)
 
 plt.grid(False)
 plt.box(False)
-# plt.savefig("{}_Graph.pdf".format(gtype), dpi=300, bbox_inches='tight')
+# plt.savefig(path_res+"{}_Graph.pdf".format(gtype), dpi=300, bbox_inches='tight')
 plt.show()
 
 #%%
@@ -323,7 +324,7 @@ for i in range(N):
 plt.ylabel('Conductivity')
 plt.xlabel('Time')
 plt.legend()
-plt.savefig(gtype+"_continuous-1st-sp.pdf", dpi=200, bbox_inches='tight')
+plt.savefig(path_res+gtype+"_continuous-1st-sp.pdf", dpi=200, bbox_inches='tight')
 plt.show()
 
 #%%
@@ -345,7 +346,7 @@ for i in range(N):
 plt.xlabel('Time')
 plt.ylabel('Input / Output')
 plt.legend(framealpha=0.6, loc='upper right')
-plt.savefig(gtype+"_const-phase_io.png", dpi=300, bbox_inches='tight')
+plt.savefig(path_res+gtype+"_const-phase_io.png", dpi=300, bbox_inches='tight')
 plt.show()
 
 # State values
@@ -362,7 +363,7 @@ for i in range(N):
 plt.xlabel('Time')
 plt.ylabel('# Particles')
 plt.legend(framealpha=0.6, loc='upper right', fontsize=14)
-plt.savefig(gtype+"_const-phase_Nt.png", dpi=300, bbox_inches='tight')
+plt.savefig(path_res+gtype+"_const-phase_Nt.png", dpi=300, bbox_inches='tight')
 plt.show()
 
 
@@ -382,7 +383,7 @@ for i in range(N):
 plt.ylabel('Conductivity')
 plt.xlabel('Time')
 plt.legend(framealpha=0.6, loc='lower right')
-plt.savefig(gtype+"_const-phase_D-sp.png", dpi=300, bbox_inches='tight')
+plt.savefig(path_res+gtype+"_const-phase_D-sp.png", dpi=300, bbox_inches='tight')
 plt.show()
 
 
@@ -403,7 +404,7 @@ for i in range(N):
 plt.ylabel('Conductivity')
 plt.xlabel('Time')
 plt.legend(framealpha=0.6)
-plt.savefig(gtype+"_const-phase_D-nsp.png", dpi=300, bbox_inches='tight')
+plt.savefig(path_res+gtype+"_const-phase_D-nsp.png", dpi=300, bbox_inches='tight')
 plt.show()
 
 #%%
@@ -435,7 +436,7 @@ for i in range(num):
 
 ani = animation.ArtistAnimation(fig, frames, interval=10, blit=True,
                                 repeat_delay=1000)
-ani.save(gtype+'_continuous-1.mp4',)
+ani.save(path_res+gtype+'_continuous-1.mp4',)
 plt.show()
 
 #%%
@@ -486,7 +487,7 @@ def update(idx):
 ani = animation.FuncAnimation(fig, update, frames=num, interval=10, repeat=False)
 # animation.ArtistAnimation(fig, frames, interval=10, blit=True,
 #                                 repeat_delay=1000)
-ani.save(gtype+'_continuous-1_net.mp4')
+ani.save(path_res+gtype+'_continuous-1_net.mp4')
 plt.show()
 
 #%%
@@ -595,5 +596,5 @@ plt.show()
 # axes[3,1].legend(framealpha=0.6, loc='upper right', prop={'size': fz_leg})
 # axes[3,1].set_xlabel('Time')
 
-# plt.savefig(gtype+"_const-all.pdf", dpi=200, bbox_inches='tight')
+# plt.savefig(path_res+gtype+"_const-all.pdf", dpi=200, bbox_inches='tight')
 # plt.show()
