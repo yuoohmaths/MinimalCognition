@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Modelling slime mould - oscilation 
+@author: Yu Tian
 
-author: Yu
-
-This is to model the dynamics on cycle graphs, where we have two nodes oscilates between source and sink.
+This is to explore the model on cycle graphs: 
+   (i) two oscillatory nodes (1 and 3);
+   (ii) phase difference \pi.
 """
 #%%
 import numpy as np
@@ -161,7 +161,7 @@ TS=0.01
 INPUT=np.hstack((x0,D0.flatten()))
 
 #%%
-# Differential equations - for scipy.integrate.odeint
+# Differential equations
 def diff_eqs(INP,t):  
     '''The main set of equations'''
     Y = np.zeros((N + N*N))
@@ -187,139 +187,255 @@ def diff_eqs(INP,t):
 
 t_start = 0.0; t_end = ND; t_inc = TS
 t_range = np.arange(t_start, t_end+t_inc, t_inc)
-RES = spi.odeint(diff_eqs,INPUT,t_range)
+# RES = spi.odeint(diff_eqs,INPUT,t_range)
+RES = spi.solve_ivp(diff_eqs, [t_start, t_end], INPUT, method='RK45', t_eval=t_range)
 
 # print(RES)
 #%%
-# visualisation - edges in the shortes paths and not
-pl.figure(figsize=(15, 15))
+###### Visualisation - [consistent format] ######
+cm = 1/2.54
+figsize = (17*cm, 12.6*cm)
+# figsize = (15, 15)
+fz = 11
+fz_leg = 6
+plt.rcParams.update({'font.size': fz})
+
+fig, axes = plt.subplots(4, 2, figsize=figsize, sharex='col', sharey='row')
+
 colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple',
           'tab:brown', 'tab:pink', 'tab:gray', 'tab:olive', 'tab:cyan']
 
-# Visualisation - the state value
-pl.subplot(411)
+# Input / Output
 for i in range(N):
   if i in souri:
-      pl.plot(t_range, oscillation(t_range, at) - bt*RES[:,i], color='b', label='node {}'.format(dict_i2n[i]), alpha=0.8)
+      axes[0,0].plot(t_range, oscillation(t_range, at) - bt*RES.y[i,:], color='b', label='node {}'.format(dict_i2n[i]), alpha=0.8)
   elif i in sinki:
-      pl.plot(t_range, oscillation(t_range+t_lag, at) - bt*RES[:,i], color='r', label='node {}'.format(dict_i2n[i]), alpha=0.8)
-pl.xlabel('Time')
-pl.ylabel('Input vs Output')
-pl.legend()
+      axes[0,0].plot(t_range, oscillation(t_range+t_lag, at) - bt*RES.y[i,:], color='r', label='node {}'.format(dict_i2n[i]), alpha=0.8)
+# axes[0,0].set_xlabel('Time')
+axes[0,0].set_ylabel('I / O')
+# axes[0,0].legend(framealpha=0.6, loc='upper right', prop={'size': fz_leg})
 
-pl.subplot(412)
+# State values
 for i in range(N):
   if i in souri:
-      pl.plot(t_range, RES[:,i], color='b', label='node {}'.format(dict_i2n[i]), alpha=0.8)
+      axes[1,0].plot(t_range, RES.y[i,:], color='b', label='node {}'.format(dict_i2n[i]), alpha=0.8)
   elif i in sinki:
-      pl.plot(t_range, RES[:,i], color='r', label='node {}'.format(dict_i2n[i]), alpha=0.8)
+      axes[1,0].plot(t_range, RES.y[i,:], color='r', label='node {}'.format(dict_i2n[i]), alpha=0.8)
   else:
-	    pl.plot(t_range, RES[:,i], color=colors[i], linestyle='dashed', label='node {}'.format(dict_i2n[i]), alpha=0.8)
-pl.xlabel('Time')
-pl.ylabel('# Particles')
-pl.legend()
+	  axes[1,0].plot(t_range, RES.y[i,:], color=colors[i], linestyle='dashed', label='node {}'.format(dict_i2n[i]), alpha=0.8)
+# axes[1,0].set_xlabel('Time')
+axes[1,0].set_ylabel('# Particles')
+# axes[1,0].legend(framealpha=0.6, loc='upper right', prop={'size': fz_leg})
 
-# Visualisation - the conductivity of the edges in the shortest paths
-pl.subplot(413)
+# Conductivity in the shortest paths
 colors = ['tab:blue', 'tab:red']
 for i in range(N):
     for j in range(i+1, N):
         if (i,j) in path_sesti:
-            pl.plot(t_range, RES[:,j+N*(1+i)], color=colors[i], label='({},{})'.format(dict_i2n[i],dict_i2n[j]), alpha=0.6)
+            axes[2,0].plot(t_range, RES.y[j+N*(1+i),:], color=colors[i], label='({},{})'.format(dict_i2n[i],dict_i2n[j]), alpha=0.6)
       #plot steady states
       # pl.hlines(y=D_steady[node, i], xmin=0, xmax=t_range[-1], color=colors[i], linestyles='--', label='({},{})'.format(node,i))
-pl.ylabel('Conductivity')
-pl.xlabel('Time')
-pl.legend()
+axes[2,0].set_ylabel('Conductivity')
+# axes[2,0].set_xlabel('Time')
+# axes[2,0].legend(framealpha=0.6, loc='lower right', prop={'size': fz_leg})
 
-# Visualisation - the conductivity of the edges that are not in the shortest path
-pl.subplot(414)
+# Conductivity of not in the shortest path
 colors = ['tab:purple', 'tab:red', 'tab:green', 'tab:orange', 'tab:pink', 'tab:olive', 'tab:cyan']
 for i in range(N):
     for j in range(i+1, N):
         if (L[i,j]>0) and ((i,j) not in path_sesti):
-            pl.plot(t_range, RES[:,j+N*(1+i)], color=colors[i], label='({},{})'.format(dict_i2n[i],dict_i2n[j]), alpha=0.6)
+            axes[3,0].plot(t_range, RES.y[j+N*(1+i),:], color=colors[i], label='({},{})'.format(dict_i2n[i],dict_i2n[j]), alpha=0.6)
       #plot steady states
       # pl.hlines(y=D_steady[node, i], xmin=0, xmax=t_range[-1], color=colors[i], linestyles='--', label='({},{})'.format(node,i))
-pl.ylabel('Conductivity')
-pl.xlabel('Time')
-pl.legend()
-pl.savefig(gtype+"_continuous-1ost-p2-diff{:1f}pi.pdf".format(round(t_lag*2*theta,1)), dpi=200, bbox_inches='tight')
-pl.show()
+axes[3,0].set_ylabel('Conductivity')
+axes[3,0].set_xlabel('Time')
+# axes[3,0].legend(framealpha=0.6, loc='upper right', prop={'size': fz_leg})
+
+
+### Finer time ###
+T_s = int(300*1/TS)
+colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple',
+          'tab:brown', 'tab:pink', 'tab:gray', 'tab:olive', 'tab:cyan']
+
+# Input / Output
+for i in range(N):
+  if i in souri:
+      axes[0,1].plot(t_range[-T_s:], (oscillation(t_range, at))[-T_s:] - bt*RES.y[i,-T_s:], color='b', label='node {}'.format(dict_i2n[i]), alpha=0.8)
+  elif i in sinki:
+      axes[0,1].plot(t_range[-T_s:], (oscillation(t_range+t_lag, at))[-T_s:] - bt*RES.y[i,-T_s:], color='r', label='node {}'.format(dict_i2n[i]), alpha=0.8)
+# plt.xlabel('Time')
+# plt.ylabel('Input / Output')
+axes[0,1].legend(framealpha=0.6, loc='upper right', prop={'size': fz_leg})
+
+# State values
+for i in range(N):
+  if i in souri:
+      axes[1,1].plot(t_range[-T_s:], RES.y[i,-T_s:], color='b', label='node {}'.format(dict_i2n[i]), alpha=0.8)
+  elif i in sinki:
+      axes[1,1].plot(t_range[-T_s:], RES.y[i,-T_s:], color='r', label='node {}'.format(dict_i2n[i]), alpha=0.8)
+  else:
+	  axes[1,1].plot(t_range[-T_s:], RES.y[i,-T_s:], color=colors[i], linestyle='dashed', label='node {}'.format(dict_i2n[i]), alpha=0.8)
+axes[1,1].legend(framealpha=0.6, loc='upper right', prop={'size': fz_leg})
+
+# Conductivity in the shortest paths
+colors = ['tab:blue', 'tab:red']
+for i in range(N):
+    for j in range(i+1, N):
+        if (i,j) in path_sesti:
+            axes[2,1].plot(t_range[-T_s:], RES.y[j+N*(1+i),-T_s:], color=colors[i], label='({},{})'.format(dict_i2n[i],dict_i2n[j]), alpha=0.6)
+      #plot steady states
+      # plt.hlines(y=D_steady[node, i], xmin=0, xmax=t_range[-1], color=colors[i], linestyles='--', label='({},{})'.format(node,i))
+axes[2,1].legend(framealpha=0.6, loc='lower right', prop={'size': fz_leg})
+
+# Conductivity not in the shortest paths
+colors = ['tab:purple', 'tab:red', 'tab:green', 'tab:orange', 'tab:pink', 'tab:olive', 'tab:cyan']
+for i in range(N):
+    for j in range(i+1, N):
+        if (L[i,j]>0) and ((i,j) not in path_sesti):
+            axes[3,1].plot(t_range[-T_s:], RES.y[j+N*(1+i),-T_s:], color=colors[i], label='({},{})'.format(dict_i2n[i],dict_i2n[j]), alpha=0.6)
+axes[3,1].legend(framealpha=0.6, loc='upper right', prop={'size': fz_leg})
+axes[3,1].set_xlabel('Time')
+
+plt.savefig(gtype+"_ost-p2-diff{:1f}pi-all.pdf".format(round(t_lag*2*theta,1)), dpi=200, bbox_inches='tight')
+plt.show()
 
 #%%
-# visualisation 3 - edges in the shortes paths and not - separated figures
+###### Visualisation ######
+cm = 1/2.54
+figsize = (17*cm, 23*cm)
+# figsize = (15, 15)
+fz = 11
+plt.rcParams.update({'font.size': fz})
+
+plt.figure(figsize=figsize)
+# fig, axes = plt.subplots(4, 2, figsize=figsize, sharex='col', sharey='row')
+
+colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple',
+          'tab:brown', 'tab:pink', 'tab:gray', 'tab:olive', 'tab:cyan']
+
+# Input / Output
+plt.subplot(411)
+for i in range(N):
+  if i in souri:
+      plt.plot(t_range, oscillation(t_range, at) - bt*RES.y[i,:], color='b', label='node {}'.format(dict_i2n[i]), alpha=0.8)
+  elif i in sinki:
+      plt.plot(t_range, oscillation(t_range+t_lag, at) - bt*RES.y[i,:], color='r', label='node {}'.format(dict_i2n[i]), alpha=0.8)
+plt.xlabel('Time')
+plt.ylabel('Input / Output')
+plt.legend()
+
+# State values
+plt.subplot(412)
+for i in range(N):
+  if i in souri:
+      plt.plot(t_range, RES.y[i,:], color='b', label='node {}'.format(dict_i2n[i]), alpha=0.8)
+  elif i in sinki:
+      plt.plot(t_range, RES.y[i,:], color='r', label='node {}'.format(dict_i2n[i]), alpha=0.8)
+  else:
+	    pl.plot(t_range, RES.y[i,:], color=colors[i], linestyle='dashed', label='node {}'.format(dict_i2n[i]), alpha=0.8)
+plt.xlabel('Time')
+plt.ylabel('# Particles')
+plt.legend()
+
+# Conductivity in the shortest paths
+plt.subplot(413)
+colors = ['tab:blue', 'tab:red']
+for i in range(N):
+    for j in range(i+1, N):
+        if (i,j) in path_sesti:
+            pl.plot(t_range, RES.y[j+N*(1+i),:], color=colors[i], label='({},{})'.format(dict_i2n[i],dict_i2n[j]), alpha=0.6)
+      #plot steady states
+      # pl.hlines(y=D_steady[node, i], xmin=0, xmax=t_range[-1], color=colors[i], linestyles='--', label='({},{})'.format(node,i))
+plt.ylabel('Conductivity')
+plt.xlabel('Time')
+plt.legend()
+
+# Conductivity not in the shortest path
+plt.subplot(414)
+colors = ['tab:purple', 'tab:red', 'tab:green', 'tab:orange', 'tab:pink', 'tab:olive', 'tab:cyan']
+for i in range(N):
+    for j in range(i+1, N):
+        if (L[i,j]>0) and ((i,j) not in path_sesti):
+            plt.plot(t_range, RES.y[j+N*(1+i),:], color=colors[i], label='({},{})'.format(dict_i2n[i],dict_i2n[j]), alpha=0.6)
+      #plot steady states
+      # pl.hlines(y=D_steady[node, i], xmin=0, xmax=t_range[-1], color=colors[i], linestyles='--', label='({},{})'.format(node,i))
+plt.ylabel('Conductivity')
+plt.xlabel('Time')
+plt.legend()
+plt.savefig(gtype+"_continuous-1ost-p2-diff{:1f}pi.pdf".format(round(t_lag*2*theta,1)), dpi=200, bbox_inches='tight')
+plt.show()
+
+#%%
+###### Visualisation - separate ######
 colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple',
           'tab:brown', 'tab:pink', 'tab:gray', 'tab:olive', 'tab:cyan']
 figsize=(9., 3.)
 fz = 16
 plt.rcParams.update({'font.size': fz})
 
-# Visualisation - the state value
+# Input / Output
 plt.figure(figsize=figsize)
 for i in range(N):
   if i in souri:
-      plt.plot(t_range, oscillation(t_range, at) - bt*RES[:,i], color='b', label='node {}'.format(dict_i2n[i]), alpha=0.8)
+      plt.plot(t_range, oscillation(t_range, at) - bt*RES.y[i,:], color='b', label='node {}'.format(dict_i2n[i]), alpha=0.8)
   elif i in sinki:
-      plt.plot(t_range, oscillation(t_range+t_lag, at) - bt*RES[:,i], color='r', label='node {}'.format(dict_i2n[i]), alpha=0.8)
+      plt.plot(t_range, oscillation(t_range+t_lag, at) - bt*RES.y[i,:], color='r', label='node {}'.format(dict_i2n[i]), alpha=0.8)
 plt.xlabel('Time')
 plt.ylabel('Input / Output')
-plt.legend(framealpha=0.6)
+plt.legend(framealpha=0.6, loc='upper right')
 plt.savefig(gtype+"_ost-phase_io.png", dpi=300, bbox_inches='tight')
 plt.show()
 
-
+# State values
 plt.figure(figsize=figsize)
 for i in range(N):
   if i in souri:
-      plt.plot(t_range, RES[:,i], color='b', label='node {}'.format(dict_i2n[i]), alpha=0.8)
+      plt.plot(t_range, RES.y[i,:], color='b', label='node {}'.format(dict_i2n[i]), alpha=0.8)
   elif i in sinki:
-      plt.plot(t_range, RES[:,i], color='r', label='node {}'.format(dict_i2n[i]), alpha=0.8)
+      plt.plot(t_range, RES.y[i,:], color='r', label='node {}'.format(dict_i2n[i]), alpha=0.8)
   else:
-	    plt.plot(t_range, RES[:,i], color=colors[i], linestyle='dashed', label='node {}'.format(dict_i2n[i]), alpha=0.8)
+	    plt.plot(t_range, RES.y[i,:], color=colors[i], linestyle='dashed', label='node {}'.format(dict_i2n[i]), alpha=0.8)
 plt.xlabel('Time')
 plt.ylabel('# Particles')
 plt.legend(framealpha=0.6, loc='upper right')
 plt.savefig(gtype+"_ost-phase_Nt.png", dpi=300, bbox_inches='tight')
 plt.show()
 
-
-# Visualisation - the conductivity of the edges in the shortest paths
+# Conductivity in the shortest paths
 colors = ['tab:blue', 'tab:red']
-
 plt.figure(figsize=figsize)
 for i in range(N):
     for j in range(i+1, N):
         if (i,j) in path_sesti:
-            plt.plot(t_range, RES[:,j+N*(1+i)], color=colors[i], label='({},{})'.format(dict_i2n[i],dict_i2n[j]), alpha=0.6)
+            plt.plot(t_range, RES.y[j+N*(1+i),:], color=colors[i], label='({},{})'.format(dict_i2n[i],dict_i2n[j]), alpha=0.6)
       #plot steady states
       # plt.hlines(y=D_steady[node, i], xmin=0, xmax=t_range[-1], color=colors[i], linestyles='--', label='({},{})'.format(node,i))
-plt.ylabel('Conductivity')
+plt.ylabel('Conductivity', loc='upper left')
 plt.xlabel('Time')
 plt.legend(framealpha=0.6)
 plt.savefig(gtype+"_ost-phase_D-sp.png", dpi=300, bbox_inches='tight')
 plt.show()
 
-#%%
-# Visualisation - the conductivity of the edges that are not in the shortest path
+# Conductivity not in the shortest path
 colors = ['tab:purple', 'tab:red', 'tab:green', 'tab:orange', 'tab:pink', 'tab:olive', 'tab:cyan']
 
 plt.figure(figsize=figsize)
 for i in range(N):
     for j in range(i+1, N):
         if (L[i,j]>0) and ((i,j) not in path_sesti):
-            plt.plot(t_range, RES[:,j+N*(1+i)], color=colors[i], label='({},{})'.format(dict_i2n[i],dict_i2n[j]), alpha=0.6)
+            plt.plot(t_range, RES.y[j+N*(1+i),:], color=colors[i], label='({},{})'.format(dict_i2n[i],dict_i2n[j]), alpha=0.6)
       #plot steady states
       # pl.hlines(y=D_steady[node, i], xmin=0, xmax=t_range[-1], color=colors[i], linestyles='--', label='({},{})'.format(node,i))
 # plt.ylim([-0.05, 1.05])
 plt.ylabel('Conductivity')
 plt.xlabel('Time')
-plt.legend(framealpha=0.6)
+plt.legend(framealpha=0.6, loc='upper right')
 plt.savefig(gtype+"_ost-phase_D-nsp.png", dpi=300, bbox_inches='tight')
 plt.show()
 
 #%%
-# visualisation 4 - edges in the shortes paths and not - separated figures + shorter
+###### Visualisation - separate - finer ######
+
 T_s = int(300*1/TS)
 colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple',
           'tab:brown', 'tab:pink', 'tab:gray', 'tab:olive', 'tab:cyan']
@@ -327,43 +443,41 @@ figsize=(9., 3.)
 fz = 16
 plt.rcParams.update({'font.size': fz})
 
-# Visualisation - the state value
+# Input / Output
 plt.figure(figsize=figsize)
 for i in range(N):
   if i in souri:
-      plt.plot(t_range[-T_s:], (oscillation(t_range, at))[-T_s:] - bt*RES[-T_s:,i], color='b', label='node {}'.format(dict_i2n[i]), alpha=0.8)
+      plt.plot(t_range[-T_s:], (oscillation(t_range, at))[-T_s:] - bt*RES.y[i,-T_s:], color='b', label='node {}'.format(dict_i2n[i]), alpha=0.8)
   elif i in sinki:
-      plt.plot(t_range[-T_s:], (oscillation(t_range+t_lag, at))[-T_s:] - bt*RES[-T_s:,i], color='r', label='node {}'.format(dict_i2n[i]), alpha=0.8)
+      plt.plot(t_range[-T_s:], (oscillation(t_range+t_lag, at))[-T_s:] - bt*RES.y[i,-T_s:], color='r', label='node {}'.format(dict_i2n[i]), alpha=0.8)
 plt.xlabel('Time')
 plt.ylabel('Input / Output')
 plt.legend(framealpha=0.6, loc='upper right')
 plt.savefig(gtype+"_ost-phase_io-s.png", dpi=300, bbox_inches='tight')
 plt.show()
 
-#%%
+# State values
 plt.figure(figsize=figsize)
 for i in range(N):
   if i in souri:
-      plt.plot(t_range[-T_s:], RES[-T_s:,i], color='b', label='node {}'.format(dict_i2n[i]), alpha=0.8)
+      plt.plot(t_range[-T_s:], RES.y[i,-T_s:], color='b', label='node {}'.format(dict_i2n[i]), alpha=0.8)
   elif i in sinki:
-      plt.plot(t_range[-T_s:], RES[-T_s:,i], color='r', label='node {}'.format(dict_i2n[i]), alpha=0.8)
+      plt.plot(t_range[-T_s:], RES.y[i,-T_s:], color='r', label='node {}'.format(dict_i2n[i]), alpha=0.8)
   else:
-	    plt.plot(t_range[-T_s:], RES[-T_s:,i], color=colors[i], linestyle='dashed', label='node {}'.format(dict_i2n[i]), alpha=0.8)
+	    plt.plot(t_range[-T_s:], RES.y[i,-T_s:], color=colors[i], linestyle='dashed', label='node {}'.format(dict_i2n[i]), alpha=0.8)
 plt.xlabel('Time')
 plt.ylabel('# Particles')
 plt.legend(framealpha=0.6, loc='upper right')
 plt.savefig(gtype+"_ost-phase_Nt-s.png", dpi=300, bbox_inches='tight')
 plt.show()
 
-#%%
-# Visualisation - the conductivity of the edges in the shortest paths
+# Conductivity in the shortest paths
 colors = ['tab:blue', 'tab:red']
-
 plt.figure(figsize=figsize)
 for i in range(N):
     for j in range(i+1, N):
         if (i,j) in path_sesti:
-            plt.plot(t_range[-T_s:], RES[-T_s:,j+N*(1+i)], color=colors[i], label='({},{})'.format(dict_i2n[i],dict_i2n[j]), alpha=0.6)
+            plt.plot(t_range[-T_s:], RES.y[j+N*(1+i),-T_s:], color=colors[i], label='({},{})'.format(dict_i2n[i],dict_i2n[j]), alpha=0.6)
       #plot steady states
       # plt.hlines(y=D_steady[node, i], xmin=0, xmax=t_range[-1], color=colors[i], linestyles='--', label='({},{})'.format(node,i))
 plt.ylabel('Conductivity')
@@ -372,17 +486,15 @@ plt.legend(framealpha=0.6, loc='upper left')
 plt.savefig(gtype+"_ost-phase_D-sp-s.png", dpi=300, bbox_inches='tight')
 plt.show()
 
-#%%
-# Visualisation - the conductivity of the edges that are not in the shortest path
+# Conductivity not in the shortest path
 colors = ['tab:purple', 'tab:red', 'tab:green', 'tab:orange', 'tab:pink', 'tab:olive', 'tab:cyan']
-
 plt.figure(figsize=figsize)
 for i in range(N):
     for j in range(i+1, N):
         if (L[i,j]>0) and ((i,j) not in path_sesti):
-            plt.plot(t_range[-T_s:], RES[-T_s:,j+N*(1+i)], color=colors[i], label='({},{})'.format(dict_i2n[i],dict_i2n[j]), alpha=0.6)
+            plt.plot(t_range[-T_s:], RES.y[j+N*(1+i),-T_s:], color=colors[i], label='({},{})'.format(dict_i2n[i],dict_i2n[j]), alpha=0.6)
       #plot steady states
-      # pl.hlines(y=D_steady[node, i], xmin=0, xmax=t_range[-1], color=colors[i], linestyles='--', label='({},{})'.format(node,i))
+      # plt.hlines(y=D_steady[node, i], xmin=0, xmax=t_range[-1], color=colors[i], linestyles='--', label='({},{})'.format(node,i))
 # plt.ylim([-0.05, 1.05])
 plt.ylabel('Conductivity')
 plt.xlabel('Time')
@@ -401,8 +513,8 @@ print("# plots in a video:", num, "per", t_lag)
 # the max value
 D_res = np.zeros((N,N))
 for i,j in G.edges():
-    D_res[i,j] = RES[-1, (i+1)*N+j]
-    D_res[j,i] = RES[-1, (j+1)*N+i]
+    D_res[i,j] = RES.y[(i+1)*N+j,-1]
+    D_res[j,i] = RES.y[(j+1)*N+i,-1]
 vmax = round(np.max(D_res) + 0.1, 1)
 print("max conductivity:", vmax)
 
@@ -413,8 +525,8 @@ for i in range(num):
     t = i*t_lag
     D_res = np.zeros((N,N))
     for i,j in G.edges():
-        D_res[i,j] = RES[t, (i+1)*N+j]
-        D_res[j,i] = RES[t, (j+1)*N+i]
+        D_res[i,j] = RES.y[(i+1)*N+j,t]
+        D_res[j,i] = RES.y[(j+1)*N+i,t]
     frames.append([plt.imshow(D_res, cmap='Blues', vmax=vmax, animated=True)])
 
 ani = animation.ArtistAnimation(fig, frames, interval=10, blit=True,
@@ -426,6 +538,7 @@ plt.show()
 # Video
 import matplotlib.animation as animation
 
+figsize = (6,4)
 num = 1000 # number of plots in a video
 t_lag = int(MaxTime/TS/num)
 print("# plots in a video:", num, "per", t_lag)
@@ -433,11 +546,11 @@ print("# plots in a video:", num, "per", t_lag)
 # the max value
 D_res = np.zeros((N,N))
 for i,j in G.edges():
-    D_res[i,j] = RES[-1, (i+1)*N+j]
-    D_res[j,i] = RES[-1, (j+1)*N+i]
+    D_res[i,j] = RES.y[(i+1)*N+j,-1]
+    D_res[j,i] = RES.y[(j+1)*N+i,-1]
 edge_max = round(np.max(D_res)+0.1, 1)
 print("max weight value:", edge_max)
-node_max = round(np.max(RES[:,:N])+0.1, 1)
+node_max = round(np.max(RES.y[:N,:])+0.1, 1)
 print("max node state:", node_max)
 
 node_size = 500
@@ -447,15 +560,15 @@ edge_color='grey'
 
 edges = list(G.edges())
 
-fig, ax = plt.subplots(figsize=(6,4))
+fig, ax = plt.subplots(figsize=figsize)
 
 # Function - plot the network at a time point
 def update(idx):
     ax.clear()
     time = idx*t_lag
     # print(idx, time)
-    node_color = RES[time, :N]
-    edge_width = [RES[time, (u+1)*N+v]*lw/edge_max for u,v in edges]
+    node_color = RES.y[:N,time]
+    edge_width = [RES.y[(u+1)*N+v,time]*lw/edge_max for u,v in edges]
     nx.draw_networkx(G, pos=pos, with_labels=True, node_size=node_size, 
                     node_color=node_color, vmax=node_max, cmap='YlOrRd',
                     edge_color=edge_color, width=edge_width, font_size=font_size,
