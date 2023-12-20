@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Oct 12 12:38:15 2023
+@author: Yu Tian
 
-@author: Yu
-
-Explore the model with oscillated input/output + phase changes.
+This is to explore the model on cycle graphs: 
+   (i) two oscillatory nodes (1 and 3);
+   (ii) phase difference between -\pi and \pi.
 """
 #%%
 import numpy as np
@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 
 # solving odes
 import scipy.integrate as spi
-import pylab as pl
+# import pylab as pl
 
 #%%
 ###############################################################################
@@ -136,8 +136,8 @@ import math
 
 # amplitude
 # a = 2.
-theta = [0.01, 0.1][0]
-magr = [0.5, 1.][1]
+theta = [0.001, 0.01, 0.1][1]
+magr = [1., 0.5][0]
 
 # Oscillation 
 def oscillation(t, rate):
@@ -163,7 +163,7 @@ print("phases/pi considered:", phs)
 res_min = []
 res_mid = []
 res_max = []
-T_res = int(100/TS) # record the min/mas of the last T_res steps
+T_res = int(500/TS) # record the min/mas of the last T_res steps
 
 # record the results for specific phase differences
 phs_rec = [-1., -0.5, 0., 0.5, 1.]
@@ -177,7 +177,7 @@ for ph in phs:
     res_max.append([])
     res_mid.append([])
     
-    def diff_eqs(INP,t):  
+    def diff_eqs(t, INP):  
         '''The main set of equations'''
         Y = np.zeros((N + N*N))
         V = INP   
@@ -202,69 +202,18 @@ for ph in phs:
     
     t_start = 0.0; t_end = ND; t_inc = TS
     t_range = np.arange(t_start, t_end+t_inc, t_inc)
-    RES = spi.odeint(diff_eqs,INPUT,t_range)
+    # RES = spi.odeint(diff_eqs,INPUT,t_range)
+    RES = spi.solve_ivp(diff_eqs, [t_start, t_end], INPUT, method='RK45', t_eval=t_range)
 
     # Record the results
     for i in range(N):
         for j in range(i+1, N):
-            res_min[-1].append(min(RES[-T_res:,j+N*(1+i)]))
-            res_max[-1].append(max(RES[-T_res:,j+N*(1+i)]))
+            res_min[-1].append(min(RES.y[j+N*(1+i), -T_res:]))
+            res_max[-1].append(max(RES.y[j+N*(1+i), -T_res:]))
             res_mid[-1].append((res_min[-1][-1] + res_max[-1][-1])/2)
     
     if round(ph,2) in phs_rec:
-        RESs.append(RES[-T_res:])
-    
-    # # Visualisation
-    # pl.figure(figsize=(24, 16))
-    
-    # # Visualisation - the state value
-    # pl.subplot(411)
-    # for i in range(N):
-    #   if i in souri:
-    #       pl.plot(t_range, oscillation(t_range, at) - bt*RES[:,i], color='b', label='initial source {}'.format(dict_i2n[i]), alpha=0.8)
-    #   elif i in sinki:
-    #       pl.plot(t_range, oscillation(t_range+t_lag, at) - bt*RES[:,i], color='r', label='initial sink {}'.format(dict_i2n[i]), alpha=0.8)
-    # pl.xlabel('Time')
-    # pl.ylabel('Input vs Output')
-    # pl.legend(loc='upper right')
-    
-    # pl.subplot(412)
-    # for i in range(N):
-    #   if i in souri:
-    #       pl.plot(t_range, RES[:,i], color='b', label='node {}'.format(dict_i2n[i]), alpha=0.8)
-    #   elif i in sinki:
-    #       pl.plot(t_range, RES[:,i], color='r', label='node {}'.format(dict_i2n[i]), alpha=0.8)
-    #   else:
-    #  	    pl.plot(t_range, RES[:,i], color=colors[i], linestyle='dashed', label='node {}'.format(dict_i2n[i]), alpha=0.8)
-    # pl.xlabel('Time')
-    # pl.ylabel('# Particles')
-    # pl.legend(loc='upper right')
-    
-    # # Visualisation - the conductivity of the edges in the shortest paths
-    # pl.subplot(413)
-    # for i in range(N):
-    #     for j in range(i+1, N):
-    #         if (i,j) in path_sesti:
-    #             pl.plot(t_range, RES[:,j+N*(1+i)], color=colors[i], label='({},{})'.format(dict_i2n[i],dict_i2n[j]), alpha=0.6)
-    #       #plot steady states
-    #       # pl.hlines(y=D_steady[node, i], xmin=0, xmax=t_range[-1], color=colors[i], linestyles='--', label='({},{})'.format(node,i))
-    # pl.ylabel('Conductivity')
-    # pl.xlabel('Time')
-    # pl.legend(loc='upper left')
-
-    # # Visualisation - the conductivity of the edges that are not in the shortest path
-    # pl.subplot(414)
-    # for i in range(N):
-    #     for j in range(i+1, N):
-    #         if (L[i,j]>0) and ((i,j) not in path_sesti):
-    #             pl.plot(t_range, RES[:,j+N*(1+i)], color=colors[i], label='({},{})'.format(dict_i2n[i],dict_i2n[j]), alpha=0.6)
-    #       #plot steady states
-    #       # pl.hlines(y=D_steady[node, i], xmin=0, xmax=t_range[-1], color=colors[i], linestyles='--', label='({},{})'.format(node,i))
-    # pl.ylabel('Conductivity')
-    # pl.xlabel('Time')
-    # pl.legend(loc='upper left')
-    # pl.savefig(gtype+"_continuous-1ost-p2-diff{:.2f}pi.pdf".format(round(ph,2)), dpi=200, bbox_inches='tight')
-    # pl.show()
+        RESs.append(RES.y[:, -T_res:])
 
 #%%
 # plot
@@ -273,11 +222,16 @@ res_max = np.array(res_max)
 res_mid = np.array(res_mid)
 
 #%%
-# Visualisation
+###### Visualisation - 1.1 Edges in SP ######
 colors = ['tab:blue', 'tab:red', 'tab:green', 'tab:orange', 'tab:purple', 'tab:orange']
+cm = 1/2.54
+figsize = (17*cm, 10.8*cm)
+# figsize = (6, 3.8)
+fz = 11
+plt.rcParams.update({'font.size': fz})
 
 # plot for the shortest path
-plt.figure(figsize=(6, 3.8))
+plt.figure(figsize=figsize)
 idx = 0
 for i in range(N):
     for j in range(i+1, N):
@@ -289,14 +243,16 @@ for i in range(N):
         idx += 1
 plt.xlabel("Phase difference"+r"$/\pi$")
 plt.ylabel("Conductivity")
-plt.ylim([-0.1, 1.38])
+# plt.ylim([-0.1, 1.38]) #\theta = 0.01
+plt.ylim([-0.1, 2.2]) #\theta = 0.001
 plt.grid()
 plt.legend()
 plt.savefig(gtype+"_ost-pis-sp.pdf", dpi=300, bbox_inches='tight')
 plt.show()    
 
-# plot for other edges
-plt.figure(figsize=(6, 3.8))
+#%%
+###### Visualisation - 1.2 Edges not in SP ######
+plt.figure(figsize=figsize)
 idx = 0
 for i in range(N):
     for j in range(i+1, N):
@@ -308,121 +264,132 @@ for i in range(N):
         idx += 1
 plt.xlabel("Phase difference"+r"$/\pi$")
 plt.ylabel("Conductivity")
-plt.ylim([-0.1, 1.38])
+# plt.ylim([-0.1, 1.38]) #\theta = 0.01
+plt.ylim([-0.1, 2.2]) #\theta = 0.001
 plt.grid()
 plt.legend()
 plt.savefig(gtype+"_ost-pis-nsp.pdf", dpi=300, bbox_inches='tight')
 plt.show() 
 
 #%%
-# plot in plot
-# plot for the shortest path
+###### Visualisation - 2.1 Edges in SP (with subfigures) ######
 colors = ['tab:blue', 'tab:red', 'tab:green', 'tab:orange', 'tab:purple']
+cm = 1/2.54
+figsize = (17*cm, 7.6*cm)
+# figsize = (8.5, 3.8)
+fz = 11
+plt.rcParams.update({'font.size': fz})
 
-fig, ax = plt.subplots(1,1,figsize=(8.5, 3.8))
+fig, ax = plt.subplots(1,1,figsize=figsize)
 ins1 = ax.inset_axes([0.86,0.65,0.12,0.18])
-ins2 = ax.inset_axes([0.05,0.65,0.12,0.18])
-ins3 = ax.inset_axes([0.45,0.5,0.12,0.18])
-ins4 = ax.inset_axes([0.1,0.25,0.12,0.18])
-ins5 = ax.inset_axes([0.81,0.25,0.12,0.18])
+ins2 = ax.inset_axes([0.07,0.65,0.12,0.18])
+ins3 = ax.inset_axes([0.45,0.4,0.12,0.18])
+ins4 = ax.inset_axes([0.09,0.1,0.12,0.18])
+ins5 = ax.inset_axes([0.85,0.1,0.12,0.18])
 
 idx = 0
 for i in range(N):
     for j in range(i+1, N):
         if (i,j) in path_sesti:
             ax.plot(phs, res_mid[:,idx], marker='*', linestyle='dashed',
-                     color=colors[i], label='({},{})'.format(dict_i2n[i],dict_i2n[j]))
+                     color=colors[i], label='({},{})'.format(dict_i2n[i],dict_i2n[j]), alpha=0.8)
             ax.fill_between(phs, res_min[:,idx], res_max[:,idx],
                              color=colors[i], alpha=0.5)
             
             # \phi/\pi=1
-            ins1.plot(list(t_range)[-T_res:], RESs[4][-T_res:,j+N*(1+i)], color=colors[i], alpha=0.6)
+            ins1.plot(list(t_range)[-T_res:], RESs[4][j+N*(1+i),-T_res:], color=colors[i], alpha=0.6)
             ins1.set_xticks([])
-            ins1.set_title(r"$\phi/\pi=1$")
+            ins1.set_title(r"$\phi/\pi=1$", fontsize=fz)
             
             # \phi\pi=-1
-            ins2.plot(list(t_range)[-T_res:], RESs[0][-T_res:,j+N*(1+i)], color=colors[i], alpha=0.6)
+            ins2.plot(list(t_range)[-T_res:], RESs[0][j+N*(1+i),-T_res:], color=colors[i], alpha=0.6)
             ins2.set_xticks([])
-            ins2.set_title(r"$\phi/\pi=-1$")
+            ins2.set_title(r"$\phi/\pi=-1$", fontsize=fz)
             
             # \phi/\pi=0
-            ins3.plot(list(t_range)[-T_res:], RESs[2][-T_res:,j+N*(1+i)], color=colors[i], alpha=0.6)
+            ins3.plot(list(t_range)[-T_res:], RESs[2][j+N*(1+i),-T_res:], color=colors[i], alpha=0.6)
             ins3.set_xticks([])
-            ins3.set_title(r"$\phi/\pi=0$")
+            ins3.set_title(r"$\phi/\pi=0$", fontsize=fz)
             
             # \phi\pi=-0.5
-            ins4.plot(list(t_range)[-T_res:], RESs[1][-T_res:,j+N*(1+i)], color=colors[i], alpha=0.6)
+            ins4.plot(list(t_range)[-T_res:], RESs[1][j+N*(1+i),-T_res:], color=colors[i], alpha=0.6)
             ins4.set_xticks([])
-            ins4.set_title(r"$\phi/\pi=-0.5$")
+            ins4.set_title(r"$\phi/\pi=-0.5$", fontsize=fz)
             
             # \phi/\pi=0.5
-            ins5.plot(list(t_range)[-T_res:], RESs[3][-T_res:,j+N*(1+i)], color=colors[i], alpha=0.6)
+            ins5.plot(list(t_range)[-T_res:], RESs[3][j+N*(1+i),-T_res:], color=colors[i], alpha=0.6)
             ins5.set_xticks([])
-            ins5.set_title(r"$\phi/\pi=0.5$")
+            ins5.set_title(r"$\phi/\pi=0.5$", fontsize=fz)
             
             
         idx += 1
 plt.xlabel("Phase difference"+r"$/\pi$")
 plt.ylabel("Conductivity")
-plt.ylim([-0.1, 1.38])
+# plt.ylim([-0.1, 1.38]) #\theta = 0.01
+plt.ylim([-0.1, 2.2]) #\theta = 0.001
 plt.xlim([-1.55, 1.55])
+plt.xticks(ticks=[-1., -0.5, 0., 0.5, 1.])
 plt.grid()
 plt.legend(loc='upper center')
-plt.savefig(gtype+"_ost-pis-sp_more.pdf", dpi=300, bbox_inches='tight')
+# plt.savefig(gtype+"_ost-pis-sp_more.pdf", dpi=300, bbox_inches='tight')
+plt.savefig(gtype+"_ost-pis-sp_more.png", dpi=300, bbox_inches='tight')
 plt.show()
 
 #%%
-# plot for edges not in the shortest path
+###### Visualisation - 2.2 Edges not in SP (with subfigures) ######
 colors = ['tab:purple', 'tab:red', 'tab:green', 'tab:orange']
 
-fig, ax = plt.subplots(1,1,figsize=(8.5, 3.8))
-ins1 = ax.inset_axes([0.876,0.17,0.12,0.18])
-ins2 = ax.inset_axes([0.062,0.17,0.12,0.18])
-ins3 = ax.inset_axes([0.45,0.48,0.12,0.18])
-ins4 = ax.inset_axes([0.25,0.4,0.12,0.18])
-ins5 = ax.inset_axes([0.65,0.4,0.12,0.18])
+fig, ax = plt.subplots(1,1,figsize=figsize)
+ins1 = ax.inset_axes([0.875,0.14,0.12,0.18])
+ins2 = ax.inset_axes([0.085,0.14,0.12,0.18])
+ins3 = ax.inset_axes([0.45,0.3,0.12,0.18])
+ins4 = ax.inset_axes([0.25,0.5,0.12,0.18])
+ins5 = ax.inset_axes([0.67,0.5,0.12,0.18])
 
 idx = 0
 for i in range(N):
     for j in range(i+1, N):
         if (L[i,j]>0) and ((i,j) not in path_sesti):
             ax.plot(phs, res_mid[:,idx], marker='*', linestyle='dashed',
-                     color=colors[i], label='({},{})'.format(dict_i2n[i],dict_i2n[j]))
+                     color=colors[i], label='({},{})'.format(dict_i2n[i],dict_i2n[j]), alpha=0.8)
             ax.fill_between(phs, res_min[:,idx], res_max[:,idx],
                              color=colors[i], alpha=0.5)
             
             # \phi/\pi=1
-            ins1.plot(list(t_range)[-T_res:], RESs[4][-T_res:,j+N*(1+i)], color=colors[i], alpha=0.6)
+            ins1.plot(list(t_range)[-T_res:], RESs[4][j+N*(1+i),-T_res:], color=colors[i], alpha=0.6)
             ins1.set_xticks([])
-            ins1.set_title(r"$\phi/\pi=1$")
+            ins1.set_title(r"$\phi/\pi=1$", fontsize=fz)
             
             # \phi/\pi=-1
-            ins2.plot(list(t_range)[-T_res:], RESs[0][-T_res:,j+N*(1+i)], color=colors[i], alpha=0.6)
+            ins2.plot(list(t_range)[-T_res:], RESs[0][j+N*(1+i),-T_res:], color=colors[i], alpha=0.6)
             ins2.set_xticks([])
-            ins2.set_title(r"$\phi/\pi=-1$")
+            ins2.set_title(r"$\phi/\pi=-1$", fontsize=fz)
             
             # \phi/\pi=0
-            ins3.plot(list(t_range)[-T_res:], RESs[2][-T_res:,j+N*(1+i)], color=colors[i], alpha=0.6)
+            ins3.plot(list(t_range)[-T_res:], RESs[2][j+N*(1+i),-T_res:], color=colors[i], alpha=0.6)
             ins3.set_xticks([])
-            ins3.set_title(r"$\phi/\pi=0$")
+            ins3.set_title(r"$\phi/\pi=0$", fontsize=fz)
             
             # \phi/\pi=-0.5
-            ins4.plot(list(t_range)[-T_res:], RESs[1][-T_res:,j+N*(1+i)], color=colors[i], alpha=0.6)
+            ins4.plot(list(t_range)[-T_res:], RESs[1][j+N*(1+i),-T_res:], color=colors[i], alpha=0.6)
             ins4.set_xticks([])
-            ins4.set_title(r"$\phi/\pi=-0.5$")
+            ins4.set_title(r"$\phi/\pi=-0.5$", fontsize=fz)
             
             # \phi/\pi=0.5
-            ins5.plot(list(t_range)[-T_res:], RESs[3][-T_res:,j+N*(1+i)], color=colors[i], alpha=0.6)
+            ins5.plot(list(t_range)[-T_res:], RESs[3][j+N*(1+i),-T_res:], color=colors[i], alpha=0.6)
             ins5.set_xticks([])
-            ins5.set_title(r"$\phi/\pi=0.5$")
+            ins5.set_title(r"$\phi/\pi=0.5$", fontsize=fz)
             
             
         idx += 1
 plt.xlabel("Phase difference"+r"$/\pi$")
 plt.ylabel("Conductivity")
-plt.ylim([-0.1, 1.38])
+# plt.ylim([-0.1, 1.38]) #\theta = 0.01
+plt.ylim([-0.1, 2.2]) #\theta = 0.001
 plt.xlim([-1.55, 1.55])
+plt.xticks(ticks=[-1., -0.5, 0., 0.5, 1.])
 plt.grid()
 plt.legend(loc='upper center')
-plt.savefig(gtype+"_ost-pis-nsp_more.pdf", dpi=300, bbox_inches='tight')
+# plt.savefig(gtype+"_ost-pis-nsp_more.pdf", dpi=300, bbox_inches='tight')
+plt.savefig(gtype+"_ost-pis-nsp_more.png", dpi=300, bbox_inches='tight')
 plt.show()
