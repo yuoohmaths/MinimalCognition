@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import scipy.integrate as spi
 # import pylab as pl
 
+path_res = './results/'
 #%%
 ###############################################################################
 #                       Networks construction
@@ -73,7 +74,7 @@ nx.draw_networkx_edges(G, pos, edge_color='grey', width=lw, alpha=0.8)
 
 plt.grid(False)
 plt.box(False)
-# plt.savefig("{}_Graph.pdf".format(gtype), dpi=300, bbox_inches='tight')
+# plt.savefig(path_res+"{}_Graph.pdf".format(gtype), dpi=300, bbox_inches='tight')
 plt.show()
 
 #%%
@@ -247,7 +248,7 @@ plt.ylabel("Conductivity")
 plt.ylim([-0.1, 2.2]) #\theta = 0.001
 plt.grid()
 plt.legend()
-plt.savefig(gtype+"_ost-pis-sp.pdf", dpi=300, bbox_inches='tight')
+plt.savefig(path_res+gtype+"_ost-pis-sp.pdf", dpi=300, bbox_inches='tight')
 plt.show()    
 
 #%%
@@ -268,7 +269,7 @@ plt.ylabel("Conductivity")
 plt.ylim([-0.1, 2.2]) #\theta = 0.001
 plt.grid()
 plt.legend()
-plt.savefig(gtype+"_ost-pis-nsp.pdf", dpi=300, bbox_inches='tight')
+plt.savefig(path_res+gtype+"_ost-pis-nsp.pdf", dpi=300, bbox_inches='tight')
 plt.show() 
 
 #%%
@@ -331,8 +332,8 @@ plt.xlim([-1.55, 1.55])
 plt.xticks(ticks=[-1., -0.5, 0., 0.5, 1.])
 plt.grid()
 plt.legend(loc='upper center')
-# plt.savefig(gtype+"_ost-pis-sp_more.pdf", dpi=300, bbox_inches='tight')
-plt.savefig(gtype+"_ost-pis-sp_more.png", dpi=300, bbox_inches='tight')
+# plt.savefig(path_res+gtype+"_ost-pis-sp_more.pdf", dpi=300, bbox_inches='tight')
+plt.savefig(path_res+gtype+"_ost-pis-sp_more.png", dpi=300, bbox_inches='tight')
 plt.show()
 
 #%%
@@ -390,6 +391,6 @@ plt.xlim([-1.55, 1.55])
 plt.xticks(ticks=[-1., -0.5, 0., 0.5, 1.])
 plt.grid()
 plt.legend(loc='upper center')
-# plt.savefig(gtype+"_ost-pis-nsp_more.pdf", dpi=300, bbox_inches='tight')
-plt.savefig(gtype+"_ost-pis-nsp_more.png", dpi=300, bbox_inches='tight')
+# plt.savefig(path_res+gtype+"_ost-pis-nsp_more.pdf", dpi=300, bbox_inches='tight')
+plt.savefig(path_res+gtype+"_ost-pis-nsp_more.png", dpi=300, bbox_inches='tight')
 plt.show()
