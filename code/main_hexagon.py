@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Nov 15 23:18:32 2023
+@author: Yu Tian
 
-@author: Yu
-
-Construct irregular hexagon tiling
+This is to explore the model on large graphs constructed by hexagon tiling: 
+   (i) multiple oscillatory nodes;
+   (ii) phase differences.
 """
 #%%
 import math
@@ -16,12 +16,13 @@ import matplotlib.pyplot as plt
 # solving odes
 import scipy.integrate as spi
 
-import random
+# import random
 import time
 import tracemalloc
 
-path = ''
-# path = '/n/home13/yuutian/PO-GraphCurvature/results/others'
+path_dat = './data/'
+path_res = './results/'
+
 #%%
 # def hexagon_generator(edge_length, offset):
 #   """Generator for coordinates in a hexagon."""
@@ -45,6 +46,10 @@ path = ''
 #           y += math.sin(math.radians(angle)) * edge_length
           
 #%%
+###############################################################################
+#                       Networks construction
+###############################################################################
+### Regular hexagon lattice ### 
 row = 7
 col = 7
 G = nx.hexagonal_lattice_graph(row, col)
@@ -59,7 +64,7 @@ pos = nx.get_node_attributes(G, 'pos')
 nx.draw_networkx(G, pos=pos, node_size=100, with_labels=True)
 
 #%%
-# choose 1/3 nodes to violate the position
+### Choose 1/3 nodes to violate the position ### 
 nodes_mod = [0, 17, 4, 21, 8, 25, 12, 29, 46, 61,
              43, 57, 39, 53, 35, 49, 31, 64, 81, 67,
              85, 71, 89, 75, 93, 110, 125, 107, 121, 103,
@@ -77,13 +82,14 @@ for i in nodes_mod:
 nx.draw_networkx(G, pos=pos_new, node_size=50, with_labels=False)
 
 #%%
-# modifications
+### Modifications ### 
 pos_new[39] = (pos_new[39][0], 
                pos_new[39][1]+(pos_new[40][1]-pos_new[39][1])*0.2)
 
 nx.draw_networkx(G, pos=pos_new, node_size=50, with_labels=False)
+
 #%%
-# save the pos
+### Save graph ### 
 nx.set_node_attributes(G, pos_new, "pos")
 # save the weights
 # Update the edge weights
@@ -99,16 +105,13 @@ for u,v in G.edges():
 nx.set_edge_attributes(G, edges_dist, "distance")
 nx.set_edge_attributes(G, edges_weis, "weight")
 
-# nx.write_gpickle(G, "hexagon-{}-{}.gpickle".format(row, col))
-nx.write_gml(G, "hexagon-{}-{}.gpickle".format(row, col))
-
+nx.write_gml(G, path_dat+"hexagon-{}-{}.gpickle".format(row, col))
 #%%
-# read in graph
+### Read graph ### 
 row = 7
 col = 7
 gtype = "hexagon-{}-{}".format(row, col)
-# G = nx.read_gpickle("hexagon-{}-{}.gpickle".format(row, col))
-G = nx.read_gml("hexagon-{}-{}.gpickle".format(row, col))
+G = nx.read_gml(path_dat+"hexagon-{}-{}.gpickle".format(row, col))
 pos = nx.get_node_attributes(G, 'pos')
 nx.draw_networkx(G, pos=pos, node_size=100)
 
@@ -129,18 +132,9 @@ dict_i2n = {n:n+1 for n in G.nodes()}
 # oscii = sorted(random.sample(list(G.nodes()), k=No))
 # print(oscii)
 # oscii = [56, 6] # no = 2, for N = 100+ hexagons
-# oscii = [56, 6, 117] # no = 3, for N = 100
-oscii = [56, 6, 117, 46, 48] # no = 5, for N = 100
+oscii = [56, 6, 117] # no = 3, for N = 100
+# oscii = [56, 6, 117, 46, 48] # no = 5, for N = 100
 
-
-# oscii = [10, 50, 11, 56, 85, 67, 88, 70, 54, 36]
-# oscii = [1, 14, 41, 63, 64, 75, 82, 93, 95, 97, 101, 103, 142, 143, 145, 150, 
-#          195, 209, 223, 227, 244, 249, 256, 265, 266, 288, 310, 317, 323, 327, 
-#          333, 338, 341, 362, 366, 394, 408, 414, 430, 444, 453, 458, 483, 488, 
-#          497, 505, 516, 520, 523, 533, 545, 556, 561, 565, 573, 581, 597, 616, 
-#          625, 626, 633, 640, 655, 684, 700, 720, 722, 727, 736, 747, 773, 776, 
-#          802, 803, 818, 822, 824, 829, 844, 847, 849, 860, 864, 870, 886, 888, 
-#          891, 896, 909, 911, 913, 920, 923, 929, 931, 934, 940, 960, 984, 988] # no=100
 No = len(oscii)
 
 print("Oscillators:", [dict_i2n[i] for i in oscii])
@@ -148,48 +142,15 @@ dict_o2i = {n:i for i,n in enumerate(oscii)}
 
 #%%
 # Plot the network
-# where source and sink has different colours
 node_size = 200
 font_size = 13
 # lw = .5
 lw_fac = 5
 
 # nodes
-chigh = ['b', 'y', 'r', 'cyan', 'skyblue']
+chigh = ['r', 'y', 'b', 'cyan', 'skyblue']
 nodec = []
 for i in range(N):
-    # if No == 2:
-    #     if i in oscii:
-    #         nodec.append(chigh[2])
-    #     else:
-    #         nodec.append(chigh[1])
-    # elif No == 3:
-    #     if i in oscii2:
-    #         nodec.append(chigh[2])
-    #     elif i in oscii:
-    #         nodec.append(chigh[0])
-    #     else:
-    #         nodec.append(chigh[1])
-    # elif No == 5:
-    #     if i in oscii2:
-    #         nodec.append(chigh[2])
-    #     elif i in oscii3:
-    #         nodec.append(chigh[0])
-    #     elif i in oscii:
-    #         nodec.append(chigh[3])
-    #     else:
-    #         nodec.append(chigh[1])
-    # elif No == 10:
-    #     if i in oscii2:
-    #         nodec.append(chigh[2])
-    #     elif i in oscii3:
-    #         nodec.append(chigh[0])
-    #     elif i in oscii5:
-    #         nodec.append(chigh[3])
-    #     elif i in oscii:
-    #         nodec.append(chigh[4])
-    #     else:
-    #         nodec.append(chigh[1])
     if i == oscii[0]:
         nodec.append(chigh[2])
     elif i in oscii[1:]:
@@ -198,9 +159,8 @@ for i in range(N):
         nodec.append(chigh[1])
 
 plt.figure(figsize=(9, 6))
-# pos = nx.spring_layout(G)
 nx.draw_networkx_nodes(G, pos, node_size=node_size, node_color=nodec, alpha=0.6)
-nx.draw_networkx_labels(G, pos, labels=dict_i2n, font_size=font_size, font_family='STIXGeneral')   
+# nx.draw_networkx_labels(G, pos, labels=dict_i2n, font_size=font_size, font_family='STIXGeneral')   
 # nx.draw_networkx_edges(G, pos, edge_color='grey', width=lw, alpha=0.8)
 # edge weights inversely correlated with the distance
 weights = np.array(list(edges_weis.values()))*lw_fac
@@ -208,7 +168,7 @@ nx.draw_networkx_edges(G, pos, edge_color='grey', width=weights, alpha=0.8)
 
 plt.grid(False)
 plt.box(False)
-plt.savefig(path+"{}_Graph-No{}.pdf".format(gtype, No), dpi=300, bbox_inches='tight')
+plt.savefig(path_res+"{}_Graph-No{}.pdf".format(gtype, No), dpi=300, bbox_inches='tight')
 plt.show()
 
 #%%
@@ -251,8 +211,7 @@ lam = .01
 # Initialisation
 # import math
 
-# amplitude
-# a = 2.
+# Frequency
 theta = 0.001
 
 # phases
@@ -266,23 +225,12 @@ print("phases/pi considered:", phs)
 # phases[0] = 0.
 # print(phases)
 # phases = [0., 1.] # No = 2
-# phases = [0., 1., 1.] # No = 3
-phases = [0., 1., 1., 1., 1.] # No = 5
+phases = [0., 1., 1.] # No = 3
+# phases = [0., 1., 1., 1., 1.] # No = 5
 # phases = [0., 1., 1., 0., 0.] # No = 5
 # phases = [0., 1., 1., 1., 0.] # No = 5
 # phases = [0., 1., 1., .5, 0.] # No = 5
 # phases = [0., .55, -0.35, 0.1, -0.75] # No = 5 random
-# phases = [0., 1., 0., 1., 1., 0., 1., 0., 1., 1.] # No = 10
-# phases = [0.0, 0.8, -0.6, -0.75, -0.75, -0.85, 0.6, 1.0, 0.05, 0.4] # random
-# phases = [0.0, 0.7, 0.95, 0.2, 0.0, 0.3, -0.1, -0.15, 0.75, -0.65, -0.25, -0.45, 
-#           -0.75, -0.45, -0.35, -0.25, -0.85, 0.55, -0.95, -0.45, -0.7, 0.15, 
-#           -0.3, 1.0, -0.75, -0.8, 0.45, 0.9, -0.4, 0.75, 0.45, -0.4, 0.7, -0.4, 
-#           -0.8, 0.1, -0.05, -0.35, 0.6, 0.65, -0.75, -0.8, 0.0, -0.95, -0.35, 
-#           0.4, -0.7, -0.7, 0.15, 0.65, 1.0, -0.85, 0.65, -0.6, -0.55, -0.25, 
-#           -0.8, 0.1, -0.45, 0.85, 0.6, 0.45, -0.6, -0.85, -0.55, 1.0, 0.15, 
-#           -0.7, -0.65, -0.8, 0.65, 0.7, -0.95, 0.05, 0.5, -0.6, 0.0, -0.5, 0.3, 
-#           1.0, 0.6, 0.25, -0.8, -0.1, -0.3, 0.65, -0.8, 0.2, 0.0, 0.15, 0.3, 
-#           -0.15, 0.05, 0.35, 0.8, 0.7, 1.0, 0.3, 0.75, 0.1] # No = 100
 phases = np.array(phases)
 t_lags = phases/(2*theta)
 
@@ -294,17 +242,8 @@ print("Amplitude ratio considered:", phs)
 # amprs = random.choices(magrs, k=No)
 # amprs[0] = 1.
 # amprs = [5., 5.] # No = 2
-# amprs = [5., 5., 5.] # No = 3
-amprs = [5., 5., 5., 5., 5.] # No = 5
-# amprs = [2., 2., 2., 2., 2., 2., 2., 2., 2., 2.] # No = 10
-# amprs = [1.0, 0.2, 1.67, 2.0, 0.7, 0.7, 1.11, 3.0, 1.25, 0.4, 0.8, 0.7, 1.67, 
-#          1.0, 2.5, 1.11, 3.33, 0.3, 0.4, 0.7, 2.0, 1.0, 3.0, 2.5, 3.0, 1.0, 0.8, 
-#          0.8, 1.11, 0.2, 0.3, 2.5, 1.11, 1.25, 0.3, 0.9, 2.0, 0.7, 3.33, 0.9, 
-#          5.0, 3.0, 5.0, 1.25, 0.6, 3.0, 0.2, 3.0, 2.0, 0.7, 1.25, 0.7, 1.0, 0.6, 
-#          2.5, 2.0, 0.8, 0.8, 0.4, 3.33, 0.6, 2.0, 0.8, 3.33, 1.0, 0.4, 3.33, 
-#          1.25, 0.3, 1.67, 2.5, 0.8, 0.2, 1.0, 1.0, 0.3, 2.5, 0.2, 1.25, 0.4, 
-#          0.7, 1.67, 1.43, 0.5, 2.5, 2.0, 0.3, 0.3, 1.67, 1.43, 3.33, 1.43, 5.0, 
-#          1.67, 0.7, 3.0, 5.0, 0.8, 0.7, 2.0] # No = 100
+amprs = [5., 5., 5.] # No = 3
+# amprs = [5., 5., 5., 5., 5.] # No = 5
 
 # Oscillation 
 def oscillation(t, rate):
@@ -360,7 +299,7 @@ print(tracemalloc.get_traced_memory())
 tracemalloc.stop()
 
 #%%
-# snapshot at stationary
+# Snapshot at sufficiently long time
 # Record the results
 figsize = (9, 6)
 T_res = int(100/TS)
@@ -379,7 +318,7 @@ for i in range(N):
         res_mid.append((res_min[-1] + res_max[-1])/2)
         
 #%%
-# Diagnosis
+###### Diagnosis ######
 colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple',
           'tab:brown', 'tab:pink', 'tab:gray', 'tab:olive', 'tab:cyan', 'lime']
 colors_io = ['r', 'b', 'y', 'tab:cyan','tab:purple','tab:orange', 'tab:green',
@@ -388,7 +327,7 @@ figsize=(9., 3.)
 fz = 16
 plt.rcParams.update({'font.size': fz})
 
-# Visualisation - the state value
+# Input / Output
 plt.figure(figsize=figsize)
 for i in range(No):
   plt.plot(t_range, oscillation(t_range+t_lags[i], at) - bt*RES.y[oscii[i], :], color=colors_io[i], label='node {}'.format(dict_i2n[oscii[i]]), alpha=0.8)
@@ -397,10 +336,10 @@ plt.ylabel('Input / Output')
 # plt.legend(framealpha=0.3, loc='upper right', ncols=1, fontsize=12) # No=2,3
 # plt.legend(framealpha=0.3, loc='upper right', ncols=3, fontsize=12) # No=5
 plt.legend(framealpha=0.3, loc='upper right', ncols=4, fontsize=12) # No=10
-plt.savefig(gtype+"-No{}_ost-phase_io.png".format(No), dpi=300, bbox_inches='tight')
+plt.savefig(path_res+gtype+"-No{}_ost-phase_io.png".format(No), dpi=300, bbox_inches='tight')
 plt.show()
 
-
+# State value
 plt.figure(figsize=figsize)
 for i in range(No):
   plt.plot(t_range, RES.y[oscii[i],:], color=colors_io[i], label='node {}'.format(dict_i2n[oscii[i]]), alpha=0.8)
@@ -415,11 +354,11 @@ plt.ylabel('# Particles')
 # plt.legend(framealpha=0.3, loc='upper right', ncols=1, fontsize=12) # No=2,3
 # plt.legend(framealpha=0.3, loc='upper right', ncols=3, fontsize=12) # No=5
 plt.legend(framealpha=0.3, loc='upper right', ncols=4, fontsize=12) # No=10
-plt.savefig(gtype+"-No{}_ost-phase_Nt.png".format(No), dpi=300, bbox_inches='tight')
+plt.savefig(path_res+gtype+"-No{}_ost-phase_Nt.png".format(No), dpi=300, bbox_inches='tight')
 plt.show()
 
 
-# Visualisation - the conductivity of the edges in the shortest paths
+# Conductivity in the shortest paths
 # path_sesti = [(6,21), (21,22), (22,38), (38,39), (39,55), (55,56)] # No=2, N=100
 path_sesti = [(56,72), (71,72), (71,87), (86,87), (86,102), (101,102), (101,117)] # No=3, N=100
 # path_sesti = [(55,54), (54, 53), (53, 52), (52, 51), (51,50), (55,56), (56,57), (57,58), (58,59)] # No=3, N=100
@@ -439,16 +378,16 @@ plt.xlabel('Time')
 # plt.legend(framealpha=0.3, loc='upper left', ncols=1, fontsize=12) # No=2
 # plt.legend(framealpha=0.3, loc='upper left', ncols=3, fontsize=12) # No=3
 plt.legend(framealpha=0.3, loc='upper left', ncols=4, fontsize=12) # No=5
-plt.savefig(gtype+"-No{}_ost-phase_D-sp.png".format(No), dpi=300, bbox_inches='tight')
+plt.savefig(path_res+gtype+"-No{}_ost-phase_D-sp.png".format(No), dpi=300, bbox_inches='tight')
 plt.show()
        
 
 #%%  
-# Draw the graph
+###### Diagnosis - Graph ######
 # node_size = 300
 # font_size = 16
 tol = 0.1
-lw = .5
+lw = 1.
 lw_ratio = .5
 lw_zero = .1
 figsize=(9, 6)
@@ -476,7 +415,7 @@ nx.draw_networkx_edges(G, pos, edge_color='k', width=np.array(lw_list)*lw_ratio,
 
 plt.grid(False)
 plt.box(False)
-plt.savefig(path+"{}_res-G-No{}.png".format(gtype, No), dpi=300, bbox_inches='tight')
+plt.savefig(path_res+"{}_res-G-No{}.png".format(gtype, No), dpi=300, bbox_inches='tight')
 plt.show()    
 
 #%%
@@ -497,9 +436,10 @@ print("max weight value:", edge_max)
 node_max = round(np.max(RES.y[:N, :])+0.1, 1)
 print("max node state:", node_max)
 
+figsize=(9, 6)
 # node_size = 300
 # font_size = 16
-lw = 0.5
+lw = [0.5, 1.][-1]
 edge_color='grey'
 
 edges = list(G.edges())
@@ -534,10 +474,12 @@ ani = animation.FuncAnimation(fig, update, frames=num, interval=10, repeat=False
 # animation.ArtistAnimation(fig, frames, interval=10, blit=True,
 #                                 repeat_delay=1000)
 # ani.save(path+gtype+'_net-No{}-nolab.mp4'.format(No))
-fps = 10
+
+#%%
+fps = [10, 20, 50][1]
 FFwriter = animation.FFMpegWriter(fps=fps)
 # fps: Movie frame rate (per second).
-ani.save(path+gtype+'_net-No{}-nolabx{}.mp4'.format(No, int(fps*MaxTime/num)), writer = FFwriter)
+ani.save(path_res+gtype+'_net-No{}-nolabx{}.mp4'.format(No, int(fps*MaxTime/num)), writer = FFwriter)
 plt.show()   
 
 #%%
@@ -577,41 +519,5 @@ for idx in range(len(indices)):
     # plt.grid(False)
     plt.grid(False)
     plt.box(False)
-    plt.savefig(path+"{}_res-G-No{}-t{}.png".format(gtype, No, idx), dpi=300, bbox_inches='tight')
+    plt.savefig(path_res+"{}_res-G-No{}-t{}.png".format(gtype, No, idx), dpi=300, bbox_inches='tight')
     plt.show() 
-
-
-#%%
-# plot the graph
-node_size = 200
-font_size = 13
-# lw = .5
-lw_fac = 5
-
-# nodes
-chigh = ['b', 'y', 'r', 'cyan', 'skyblue']
-
-plt.figure(figsize=(9, 6))
-# pos = nx.spring_layout(G)
-nx.draw_networkx_nodes(G, pos, node_size=node_size, node_color=chigh[1], alpha=0.6)
-nx.draw_networkx_labels(G, pos, labels=dict_i2n, font_size=font_size, font_family='STIXGeneral')   
-# nx.draw_networkx_edges(G, pos, edge_color='grey', width=lw, alpha=0.8)
-# edge weights inversely correlated with the distance
-weights = np.array(list(edges_weis.values()))*lw_fac
-nx.draw_networkx_edges(G, pos, edge_color='grey', width=weights, alpha=0.8)
-
-plt.grid(False)
-plt.box(False)
-plt.savefig(path+"{}_Graph.pdf".format(gtype, No), dpi=300, bbox_inches='tight')
-plt.show()
-
-
-
-
-
-
-
-
-
-
-
