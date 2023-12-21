@@ -1,7 +1,6 @@
-# SlimeMould
+# Minimal Model of Cognition
 This is the repository to maintain the code for the following paper
-"*A minimal model of cognition based on oscillatory and
-reinforcement processes*". 
+"*A minimal model of cognition based on oscillatory and reinforcement processes*". 
 
 
 ## Requirement
