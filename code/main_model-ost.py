@@ -163,7 +163,7 @@ INPUT=np.hstack((x0,D0.flatten()))
 
 #%%
 # Differential equations
-def diff_eqs(INP,t):  
+def diff_eqs(t,INP):  
     '''The main set of equations'''
     Y = np.zeros((N + N*N))
     V = INP   
@@ -198,7 +198,7 @@ cm = 1/2.54
 figsize = (17*cm, 12.6*cm)
 # figsize = (15, 15)
 fz = 11
-fz_leg = 6
+fz_leg = 5
 plt.rcParams.update({'font.size': fz})
 
 fig, axes = plt.subplots(4, 2, figsize=figsize, sharex='col', sharey='row')
