@@ -215,7 +215,7 @@ for magr in magrs:
         res_max.append([])
         res_mid.append([])
         
-        def diff_eqs(INP,t):  
+        def diff_eqs(t, INP):  
             '''The main set of equations'''
             Y = np.zeros((N + N*N))
             V = INP   
