@@ -6,10 +6,10 @@ This is the repository to maintain the code for the following paper
 ## Requirement
 The code is written in Python, and the following packages are required. 
 
-- numpy=1.24.3
-- networkx=3.1
-- matplotlib=3.7.2
-- scipy=1.11.1
+* [NumPy](https://github.com/numpy/numpy) = 1.24.3 (Matrix Manipulation)
+* [NetworkX](https://github.com/networkx/networkx) = 3.1 (Based Graph library)
+* [Matplotlib](https://github.com/matplotlib/matplotlib) = 3.7.2 (Visulisation)
+* [SciPy](https://github.com/scipy/scipy) = 1.11.1 (ODE Solver)
 
 ## Code
 The following files are contained under the code folder. 
@@ -27,10 +27,18 @@ The following folders are contained under the code folder.
 - results: videos generated from main_hexagon.py with $3$ and $5$ oscillatory nodes.
 
 ## Citation
-If you use the code in this repository for your publication, please cite us as follows. \
-{\
-*our bib here*\
-}
+If you use this code in your research, please considering cite our paper:
 
+```
+@article{lts2024minimalcognition,
+  title={A minimal model of cognition based on oscillatory and reinforcement processes},
+  author={Gyllingberg*, L. and Tian*, Y. and Sumpter, D.},
+  journal={arXiv},
+  volume={},
+  number={},
+  pages={},
+  year={2024}
+}
+```
 ## Contact
 If you have any questions, please contact [Yu Tian](mailto:yu.tian@su.se).
