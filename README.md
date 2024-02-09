@@ -36,7 +36,7 @@ If you use this code in your research, please considering cite our paper:
   journal={arXiv},
   volume={},
   number={},
-  pages={},
+  pages={arXiv:2402.02520},
   year={2024}
 }
 ```
