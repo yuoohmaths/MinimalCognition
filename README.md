@@ -41,4 +41,4 @@ If you use this code in your research, please considering cite our paper:
 }
 ```
 ## Contact
-If you have any questions, please contact [Yu Tian](mailto:yu.tian@su.se).
+If you have any questions, please contact [Yu Tian](mailto:yu.tian.research@gmail.com).
