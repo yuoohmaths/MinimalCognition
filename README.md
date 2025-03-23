@@ -14,12 +14,12 @@ The code is written in Python, and the following packages are required.
 ## Code
 The following files are contained under the code folder. 
 
-- main_model-cont.py: cycle graph generation, model with constant input/output, and result visualisation.
-- main_model-ost.py: cycle graph generation, model with two oscillatory nodes (phase difference: $\pi$), and result visualisation.
-- main_model-ost-phs.py: cycle graph generation, model with two oscillatory nodes (varying phase differences between $-\pi$ and $\pi$), and result visualisation (inc. bifurcation plots).
-- main_model-ost-phAs.py: cycle graph generation, model with two oscillatory nodes (varying phase differences between $-\pi$ and $\pi$ and amplitude ratios between $1/10$ and $10$), and result visualisation (inc. table of resulting graphs).
-- main_model-ost-phths.py: cycle graph generation, model with two oscillatory nodes (varying phase differences between $-\pi$ and $\pi$ and frequency ratio between $1/10$ and $10$), and result visualisation (inc. table of resulting graphs).
-- main_hexagon.py: hexagon graph generation, model with multiple oscillatory nodes, and result visualisation (inc. videos).
+- main_model-cont.py: cycle graph generation, the model with constant input/output, and result visualisation.
+- main_model-ost.py: cycle graph generation, the model with two oscillatory nodes (phase difference: $\pi$), and result visualisation.
+- main_model-ost-phs.py: cycle graph generation, the model with two oscillatory nodes (varying phase differences between $-\pi$ and $\pi$), and result visualisation (inc. bifurcation plots).
+- main_model-ost-phAs.py: cycle graph generation, the model with two oscillatory nodes (varying phase differences between $-\pi$ and $\pi$ and amplitude ratios between $1/10$ and $10$), and result visualisation (inc. table of resulting graphs).
+- main_model-ost-phths.py: cycle graph generation, the model with two oscillatory nodes (varying phase differences between $-\pi$ and $\pi$ and frequency ratio between $1/10$ and $10$), and result visualisation (inc. table of resulting graphs).
+- main_hexagon.py: hexagon graph generation, the model with multiple oscillatory nodes, and result visualisation (inc. videos).
 
 The following folders are contained under the code folder.
 
@@ -30,7 +30,7 @@ The following folders are contained under the code folder.
 If you use this code in your research, please considering cite our paper:
 
 ```
-@article{lts2024minimalcognition,
+@article{gts2024minimalcognition,
   title={A minimal model of cognition based on oscillatory and reinforcement processes},
   author={Gyllingberg*, L. and Tian*, Y. and Sumpter, D.},
   journal = {Journal of The Royal Society Interface},
