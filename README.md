@@ -1,6 +1,6 @@
 # Minimal Model of Cognition
 This is the repository to maintain the code for the following paper
-"*A minimal model of cognition based on oscillatory and reinforcement processes*". 
+"Gyllingberg Linnéa†, Tian Yu† and Sumpter David J. T., [*A minimal model of cognition based on oscillatory and current-based reinforcement processes*](http://doi.org/10.1098/rsif.2024.0402), J. R. Soc. Interface, 22 (2025), rsif.2024.0402.". 
 
 
 ## Requirement
@@ -33,11 +33,12 @@ If you use this code in your research, please considering cite our paper:
 @article{lts2024minimalcognition,
   title={A minimal model of cognition based on oscillatory and reinforcement processes},
   author={Gyllingberg*, L. and Tian*, Y. and Sumpter, D.},
-  journal={arXiv},
-  volume={},
-  number={},
-  pages={arXiv:2402.02520},
-  year={2024}
+  journal = {Journal of The Royal Society Interface},
+  volume = {22},
+  number = {222},
+  pages = {rsif.2024.0402},
+  year = {2025},
+  doi = {10.1098/rsif.2024.0402}
 }
 ```
 ## Contact
